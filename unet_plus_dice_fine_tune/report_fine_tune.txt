@@ -1,0 +1,12 @@
+              precision    recall  f1-score   support
+
+  background     0.9899    0.9843    0.9871   3199198
+  foreground     0.7784    0.8456    0.8106    208674
+
+    accuracy                         0.9758   3407872
+   macro avg     0.8841    0.9150    0.8988   3407872
+weighted avg     0.9769    0.9758    0.9763   3407872
+
+Test Loss: 0.1918, Test IoU: 0.6808
+
+Total Time: 467.3 seconds, Average Time per Epoch: 9.0 seconds

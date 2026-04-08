@@ -1,0 +1,10 @@
+              precision    recall  f1-score   support
+
+  background     0.9895    0.9944    0.9919  75749375
+  foreground     0.8313    0.7235    0.7736   2893825
+
+    accuracy                         0.9844  78643200
+   macro avg     0.9104    0.8589    0.8828  78643200
+weighted avg     0.9837    0.9844    0.9839  78643200
+
+Test Loss: 0.2253, Test IoU: 0.6307

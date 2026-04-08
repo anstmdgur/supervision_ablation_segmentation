@@ -1,0 +1,67 @@
+unet_baseline:
+  model : 'unet'
+  loss_type : 'dice'
+  path : './segmentation_framework/unet_baseline/'
+
+unet_focal:
+  model : 'unet'
+  loss_type : 'focal'
+  path : './segmentation_framework/unet_focal/'
+
+unet_tversky:
+  model : 'unet'
+  loss_type : 'tversky'
+  path : './segmentation_framework/unet_tversky/'
+
+unet_focal_tversky:
+  model : 'unet'
+  loss_type : 'focal_tversky'
+  path : './segmentation_framework/unet_focal_tversky/'
+
+unet_combo:
+  model : 'unet'
+  loss_type : 'combo'
+  path : './segmentation_framework/unet_combo/'
+
+
+
+
+attention_unet_baseline:
+  model : 'attention_unet'
+  loss_type : 'focal_tversky'
+  path : './segmentation_framework/attention_unet_baseline/'
+
+attention_unet_dice:
+  model : 'attention_unet'
+  loss_type : 'dice'
+  path : './segmentation_framework/attention_unet_dice/'
+
+unet_plus_baseline:
+  model : 'unet_plus'
+  loss_type : 'focal_tversky'
+  path : './segmentation_framework/unet_plus_baseline/'
+
+unet_plus_dice:
+  model : 'unet_plus'
+  loss_type : 'dice'
+  path : './segmentation_framework/unet_plus_dice/'
+
+unet_dice_xcad:
+  model : 'unet'
+  loss_type : 'dice'
+  path : './segmentation_framework/unet_dice_xcad/'
+
+unet_dice_fine_tune: #60
+  model : 'unet'
+  loss_type : 'dice'
+  path : './segmentation_framework/unet_dice_fine_tune/'
+
+attention_unet_dice_fine_tune:
+  model : 'attention_unet'
+  loss_type : 'dice'
+  path : './segmentation_framework/attention_unet_dice_fine_tune/'
+
+unet_plus_dice_fine_tune:
+  model : 'unet_plus'
+  loss_type : 'dice'
+  path : './segmentation_framework/unet_plus_dice_fine_tune/'
