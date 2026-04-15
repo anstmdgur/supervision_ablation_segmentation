@@ -65,3 +65,18 @@ unet_plus_dice_fine_tune:
   model : 'unet_plus'
   loss_type : 'dice'
   path : './segmentation_framework/unet_plus_dice_fine_tune/'
+
+unet_plus_enhanced:
+  model : 'unet_plus'
+  loss_type : 'dice'
+  path : './segmentation_framework/unet_plus_enhanced/'
+
+unet_plus_enhanced_stenosis:
+  model : 'unet_plus'
+  loss_type : 'dice'
+  path : './segmentation_framework/unet_plus_enhanced_stenosis/'
+
+unet_plus_enhanced_stenosis_postprocessed:
+  model : 'unet_plus'
+  loss_type : 'dice'
+  path : './segmentation_framework/unet_plus_enhanced_stenosis_postprocessed/'

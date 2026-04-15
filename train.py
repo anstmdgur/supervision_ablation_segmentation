@@ -9,7 +9,7 @@ import torchmetrics as tm
 import cv2
 import os
 import seaborn as sns
-
+from skimage import measure
 
 def overlap_tiles(images, masks, tile_size=384, stride=128):
 
@@ -66,6 +66,71 @@ def merge_tiles(predicted_tiles, h=512, w=512, tile_size=384, stride=128):
     
     return final_prediction
 
+
+import torch
+import cv2
+import numpy as np
+from skimage import measure
+
+def postprocess(pred_mask, close_ksize=9, erode_ksize=3):
+    """
+    PyTorch Tensor를 입력받아 내부에서 Numpy로 후처리를 진행한 뒤,
+    다시 원래 디바이스의 Tensor로 반환합니다.
+    """
+    # 1. 입력 텐서의 디바이스와 원래 차원(shape) 기억
+    original_device = pred_mask.device
+    original_shape = pred_mask.shape
+    
+    # 2. OpenCV 연산을 위해 CPU 넘파이 배열로 변환
+    mask_np = pred_mask.detach().cpu().numpy()
+    
+    # 3. 배치(Batch) 및 채널(Channel) 차원 평탄화 (N, H, W) 형태로 맞춤
+    if mask_np.ndim == 2:
+        mask_np = mask_np[np.newaxis, ...] # (1, H, W)
+    elif mask_np.ndim == 4:
+        b, c, h, w = mask_np.shape
+        mask_np = mask_np.reshape(-1, h, w) # (B*C, H, W)
+        
+    processed_masks = []
+    
+    # 타원형(Ellipse) 커널 생성
+    kernel_close = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (close_ksize, close_ksize))
+    kernel_erode = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (erode_ksize, erode_ksize))
+    
+    # 4. 배치 내의 각 마스크(H, W)마다 개별적으로 연산 수행
+    for single_mask in mask_np:
+        # 모델 출력이 0~1 float인 경우 OpenCV 처리를 위해 0~255 uint8로 변환
+        if single_mask.max() <= 1.0:
+            mask_uint8 = (single_mask * 255).astype(np.uint8)
+        else:
+            mask_uint8 = single_mask.astype(np.uint8)
+
+        # 닫힘 및 침식 연산
+        closed_mask = cv2.morphologyEx(mask_uint8, cv2.MORPH_CLOSE, kernel_close)
+        eroded_mask = cv2.erode(closed_mask, kernel_erode, iterations=1)
+
+        # 가장 큰 객체 추출 (CCA)
+        labels = measure.label(eroded_mask > 0, connectivity=2)
+        
+        if labels.max() == 0:
+            final_mask = (eroded_mask > 0).astype(np.float32)
+        else:
+            bincount = np.bincount(labels.flat)
+            bincount[0] = 0
+            largest_label = bincount.argmax()
+            
+            # 다음 파이프라인 연산을 위해 다시 0.0 ~ 1.0 float32로 맞춤
+            final_mask = (labels == largest_label).astype(np.float32)
+            
+        processed_masks.append(final_mask)
+        
+    # 5. 리스트를 다시 원본 텐서와 동일한 형태(B, 1, H, W 등)로 묶기
+    processed_np = np.array(processed_masks).reshape(original_shape)
+    
+    # 6. 원래 디바이스에 PyTorch 텐서로 올려서 반환
+    final_tensor = torch.tensor(processed_np, device=original_device)
+    
+    return final_tensor
 
 
 dice_loss = smp.losses.DiceLoss(mode='binary')
@@ -133,7 +198,7 @@ def model_train(dataloader, model, optimizer, device, config):
 
     return avg_loss, avg_iou
 
-def model_evaluate(dataloader, model, device, config, mode = 'validation'):
+def model_evaluate(dataloader, model, device, config, mode = 'validation', postprocessing=False):
     model.eval()
     iou_sum = 0
     eval_loss_sum = 0
@@ -176,7 +241,8 @@ def model_evaluate(dataloader, model, device, config, mode = 'validation'):
             iou_sum += iou.item()
             if mode == 'test':
                 output = (merged_probs_tensor > 0.5).float()
-                
+                if postprocessing:
+                    output = postprocess(output)
                 test_predictions.extend(output.cpu().numpy())
                 test_labels.extend(label.cpu().numpy())
                 test_images.extend(image.cpu().numpy())

@@ -5,6 +5,7 @@ import numpy as np
 import albumentations as A
 import matplotlib.pyplot as plt
 import os
+import natsort
 
 #CLAHE
 #external 데이터를 활용한다면 A.randomBrightnessContrast를 활용해 밝기와 명암을 무작위 조절하여 일반화 성능을 높여볼 수 있음.
@@ -34,7 +35,7 @@ class ARCADE_train_dataset(Dataset):
                 mean=(0.449,), std=(0.226,), #imageNet의 평균과 표준편차
                 max_pixel_value=255.0,
                 p=1.0)], additional_targets={'mask': 'mask'}) #{'내가_쓸_이름': '알부멘테이션이_알아들을_타입'} 지워도 상관x
-        self.image_filenames = sorted(os.listdir(image_dir))
+        self.image_filenames = natsort.natsorted(os.listdir(image_dir))
     
     def __len__(self):
         return len(self.image_filenames)
@@ -92,7 +93,7 @@ class XCAD_train_dataset(Dataset):
                 mean=(0.449,), std=(0.226,), #imageNet의 평균과 표준편차
                 max_pixel_value=255.0,
                 p=1.0)], additional_targets={'mask': 'mask'}) #{'내가_쓸_이름': '알부멘테이션이_알아들을_타입'} 지워도 상관x
-        self.image_filenames = sorted(os.listdir(image_dir))
+        self.image_filenames = natsort.natsorted(os.listdir(image_dir))
     
     def __len__(self):
         return len(self.image_filenames)
@@ -129,7 +130,7 @@ class ARCADE_eval_dataset(Dataset):
                 mean=(0.449,), std=(0.226,), #imageNet의 평균과 표준편차
                 max_pixel_value=255.0,
                 p=1.0)], additional_targets={'mask': 'mask'})
-        self.image_filenames = sorted(os.listdir(image_dir))
+        self.image_filenames = natsort.natsorted(os.listdir(image_dir))
     
     def __len__(self):
         return len(self.image_filenames)
@@ -162,7 +163,7 @@ class ARCADE_eval_dataset(Dataset):
 #                 mean=(0.449,), std=(0.226,), #imageNet의 평균과 표준편차
 #                 max_pixel_value=255.0,
 #                 p=1.0)], additional_targets={'mask': 'mask'})
-#         self.image_filenames = sorted(os.listdir(image_dir))
+#         self.image_filenames = natsort.natsorted(os.listdir(image_dir))
     
 #     def __len__(self):
 #         return len(self.image_filenames)
