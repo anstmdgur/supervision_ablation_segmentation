@@ -34,29 +34,29 @@ def main_train(config_name, trainable=True, test = True, load = False):
     mymodel = model.select_model(config).to(device)
 
     if load:
-        checkpoint = torch.load(os.path.join(f"./segmentation_framework/{load}/checkpoint_fine_tune.pt"), map_location=device)
+        checkpoint = torch.load(os.path.join(f"./segmentation_framework/{load}/checkpoint.pt"), map_location=device)
         mymodel.load_state_dict(checkpoint['model'])
 
     optimizer = torch.optim.AdamW(mymodel.parameters(), lr=1e-4,betas=(0.9, 0.999), weight_decay=1e-6)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode = 'min', factor = 0.2, patience = 5, min_lr = 1e-6)
-    train_loader, validation_loader, test_loader = dataset.get_ARCADE_loaders(
-        train_image_dir="./data/ARCADE/syntax/train/images/",
-        train_mask_dir="./data/ARCADE/syntax/train/masks/",
-        val_image_dir="./data/ARCADE/syntax/val/images/",
-        val_mask_dir="./data/ARCADE/syntax/val/masks/",
-        test_image_dir="./data/ARCADE/stenosis/test/images/",
-        test_mask_dir="./data/ARCADE/stenosis/test/masks/",   
-        batch_size=4)
-
-
-    # train_loader, validation_loader, test_loader = dataset.get_XCAD_loaders(
-    #     train_image_dir="./data/XCAD/train/images/",
-    #     train_mask_dir="./data/XCAD/train/masks/",
-    #     val_image_dir="./data/XCAD/val/images/",
-    #     val_mask_dir="./data/XCAD/val/masks/",
-    #     test_image_dir="./data/XCAD/test/images/",
-    #     test_mask_dir="./data/XCAD/test/masks/",   
+    # train_loader, validation_loader, test_loader = dataset.get_ARCADE_loaders(
+    #     train_image_dir="./data/ARCADE/syntax/train/images/",
+    #     train_mask_dir="./data/ARCADE/syntax/train/masks/",
+    #     val_image_dir="./data/ARCADE/syntax/val/images/",
+    #     val_mask_dir="./data/ARCADE/syntax/val/masks/",
+    #     test_image_dir="./data/ARCADE/stenosis/test/images/",
+    #     test_mask_dir="./data/ARCADE/stenosis/test/masks/",   
     #     batch_size=4)
+
+
+    train_loader, validation_loader, test_loader = dataset.get_XCAD_loaders(
+        train_image_dir="./data/XCAD/train/images/",
+        train_mask_dir="./data/XCAD/train/masks/",
+        val_image_dir="./data/XCAD/val/images/",
+        val_mask_dir="./data/XCAD/val/masks/",
+        test_image_dir="./data/XCAD/test/images/",
+        test_mask_dir="./data/XCAD/test/masks/",   
+        batch_size=4)
     
     if trainable:
         history = {
@@ -95,8 +95,8 @@ def main_train(config_name, trainable=True, test = True, load = False):
         total_time = end_time - start_time
         avg_time_per_epoch = total_time/real_epoch if real_epoch > 0 else 0
     if test: 
-        # checkpoint = torch.load(os.path.join(path, 'checkpoint_fine_tune.pt'), map_location=device)
-        # mymodel.load_state_dict(checkpoint['model'])
+        checkpoint = torch.load(os.path.join(path, 'checkpoint_fine_tune.pt'), map_location=device)
+        mymodel.load_state_dict(checkpoint['model'])
         test_loss, test_iou = train.model_evaluate(dataloader=test_loader, model=mymodel, device=device, config=config, mode='test')
         save_path = os.path.join(path, f"report_fine_tune.txt")
         with open(save_path, "a", encoding="utf-8") as f:
@@ -119,6 +119,7 @@ def main_train(config_name, trainable=True, test = True, load = False):
 # main_train(config_name='unet_plus_dice_fine_tune', test=True, load='unet_plus_dice')
 # main_train(config_name='unet_plus_enhanced', trainable=False, test=True, load='unet_plus_dice_fine_tune')
 # main_train(config_name='unet_plus_enhanced_stenosis', trainable=False, test=True, load='unet_plus_dice_fine_tune')
+main_train(config_name='unet_plus_focal_tversky_enhanced',trainable=True, test=True,load='unet_plus_baseline')
 
 
 
@@ -260,75 +261,75 @@ def extract_and_straighten(binary_mask):
 # 학습 코드가 끝난 후 이 함수가 호출되어 결과물이 시각화됩니다.
 # visualize_single_prediction_pipeline(config_name='unet_plus_enhanced_stenosis_postprocessed', load_name='unet_plus_dice_fine_tune')
 
-def save_all_postprocessed_masks_for_yolo(config_name, load_name, save_dir="./data/ARCADE/stenosis_yolo/unet_plus/images/train/"):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# def save_all_postprocessed_masks_for_yolo(config_name, load_name, save_dir="./data/ARCADE/stenosis_yolo/unet_plus/images/train/"):
+#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    # 1. 환경 설정 및 모델 로드
-    with open('./segmentation_framework/config.yaml', 'r', encoding='utf-8') as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)[config_name]
+#     # 1. 환경 설정 및 모델 로드
+#     with open('./segmentation_framework/config.yaml', 'r', encoding='utf-8') as f:
+#         config = yaml.load(f, Loader=yaml.FullLoader)[config_name]
         
-    mymodel = model.select_model(config).to(device)
-    checkpoint_path = os.path.join(f"./segmentation_framework/{load_name}/checkpoint_fine_tune.pt")
-    if os.path.exists(checkpoint_path):
-        checkpoint = torch.load(checkpoint_path, map_location=device)
-        mymodel.load_state_dict(checkpoint['model'])
-    mymodel.eval()
+#     mymodel = model.select_model(config).to(device)
+#     checkpoint_path = os.path.join(f"./segmentation_framework/{load_name}/checkpoint_fine_tune.pt")
+#     if os.path.exists(checkpoint_path):
+#         checkpoint = torch.load(checkpoint_path, map_location=device)
+#         mymodel.load_state_dict(checkpoint['model'])
+#     mymodel.eval()
 
-    # 2. 결과물을 저장할 디렉토리 생성
-    os.makedirs(save_dir, exist_ok=True)
+#     # 2. 결과물을 저장할 디렉토리 생성
+#     os.makedirs(save_dir, exist_ok=True)
 
-    # 3. 데이터 로더 호출 (전체 순회를 위해 사용)
-    train_loader, val_loader, test_loader = dataset.get_ARCADE_loaders(
-        train_image_dir="./data/ARCADE/stenosis/train/images/",
-        train_mask_dir="./data/ARCADE/stenosis/train/masks/",
-        val_image_dir="./data/ARCADE/stenosis/val/images/",
-        val_mask_dir="./data/ARCADE/stenosis/val/masks/",
-        test_image_dir="./data/ARCADE/stenosis/train/images/",
-        test_mask_dir="./data/ARCADE/stenosis/train/masks/",   
-        batch_size=1  # 한 장씩 독립적으로 후처리를 수행하기 위함
-    )
+#     # 3. 데이터 로더 호출 (전체 순회를 위해 사용)
+#     train_loader, val_loader, test_loader = dataset.get_ARCADE_loaders(
+#         train_image_dir="./data/ARCADE/stenosis/train/images/",
+#         train_mask_dir="./data/ARCADE/stenosis/train/masks/",
+#         val_image_dir="./data/ARCADE/stenosis/val/images/",
+#         val_mask_dir="./data/ARCADE/stenosis/val/masks/",
+#         test_image_dir="./data/ARCADE/stenosis/train/images/",
+#         test_mask_dir="./data/ARCADE/stenosis/train/masks/",   
+#         batch_size=1  # 한 장씩 독립적으로 후처리를 수행하기 위함
+#     )
 
-    print(f"후처리가 완료된 마스크를 '{save_dir}' 경로에 저장합니다...")
+#     print(f"후처리가 완료된 마스크를 '{save_dir}' 경로에 저장합니다...")
 
-    with torch.no_grad():
-        # idx(Index)를 활용하여 순차적으로 접근
-        for idx, batch_data in enumerate(test_loader):
-            # 만약 DataLoader(데이터 로더)가 파일명을 반환한다면 분해해서 사용해야 합니다.
-            # 예: image, label, filename = batch_data
-            image, label = batch_data[0], batch_data[1]
-            image = image.to(device)
+#     with torch.no_grad():
+#         # idx(Index)를 활용하여 순차적으로 접근
+#         for idx, batch_data in enumerate(test_loader):
+#             # 만약 DataLoader(데이터 로더)가 파일명을 반환한다면 분해해서 사용해야 합니다.
+#             # 예: image, label, filename = batch_data
+#             image, label = batch_data[0], batch_data[1]
+#             image = image.to(device)
             
-            # 원본 추론 (Tiling 방식 유지)
-            tiles, _ = train.overlap_tiles(image, label)
-            tiles = tiles.repeat(1, 3, 1, 1)
-            out = mymodel(tiles)
-            if isinstance(out, tuple): 
-                out = out[0]
+#             # 원본 추론 (Tiling 방식 유지)
+#             tiles, _ = train.overlap_tiles(image, label)
+#             tiles = tiles.repeat(1, 3, 1, 1)
+#             out = mymodel(tiles)
+#             if isinstance(out, tuple): 
+#                 out = out[0]
             
-            probs = torch.sigmoid(out).cpu().numpy()
-            merged_prob = train.merge_tiles(probs[0:4, 0, :, :])
-            original_pred_mask = (merged_prob > 0.5).astype(np.float32)
+#             probs = torch.sigmoid(out).cpu().numpy()
+#             merged_prob = train.merge_tiles(probs[0:4, 0, :, :])
+#             original_pred_mask = (merged_prob > 0.5).astype(np.float32)
 
-            # 후처리 (닫힘 -> 침식 -> LCC 추출)
-            post_processed_mask = apply_postprocess_2d(original_pred_mask, close_ksize=9, erode_ksize=3)
+#             # 후처리 (닫힘 -> 침식 -> LCC 추출)
+#             post_processed_mask = apply_postprocess_2d(original_pred_mask, close_ksize=9, erode_ksize=3)
 
-            # 저장 포맷 변환: 모델 아웃풋(0.0 ~ 1.0)을 이미지 픽셀 값(0 ~ 255, uint8(Unsigned Integer 8-bit))으로 스케일링
-            final_mask_uint8 = (post_processed_mask * 255).astype(np.uint8)
+#             # 저장 포맷 변환: 모델 아웃풋(0.0 ~ 1.0)을 이미지 픽셀 값(0 ~ 255, uint8(Unsigned Integer 8-bit))으로 스케일링
+#             final_mask_uint8 = (post_processed_mask * 255).astype(np.uint8)
 
-            # 파일명 지정 및 저장
-            # 주의: 데이터 로더에서 원본 파일명을 반환받도록 수정하여 원본 이름과 동일하게 맞추는 것이
-            # 나중에 YOLO(You Only Look Once) 라벨링과 매핑할 때 훨씬 안전합니다. 
-            # 여기서는 파일명이 반환되지 않는다고 가정하고 임의의 인덱스를 부여했습니다.
-            file_name = f"{idx+1}.png"
-            save_path = os.path.join(save_dir, file_name)
+#             # 파일명 지정 및 저장
+#             # 주의: 데이터 로더에서 원본 파일명을 반환받도록 수정하여 원본 이름과 동일하게 맞추는 것이
+#             # 나중에 YOLO(You Only Look Once) 라벨링과 매핑할 때 훨씬 안전합니다. 
+#             # 여기서는 파일명이 반환되지 않는다고 가정하고 임의의 인덱스를 부여했습니다.
+#             file_name = f"{idx+1}.png"
+#             save_path = os.path.join(save_dir, file_name)
             
-            # OpenCV(Open Source Computer Vision Library)를 활용하여 512x512 PNG(Portable Network Graphics) 파일로 기록
-            cv2.imwrite(save_path, final_mask_uint8)
+#             # OpenCV(Open Source Computer Vision Library)를 활용하여 512x512 PNG(Portable Network Graphics) 파일로 기록
+#             cv2.imwrite(save_path, final_mask_uint8)
             
-            if (idx + 1) % 10 == 0:
-                print(f"[{idx + 1}/{len(test_loader)}] 이미지 저장 완료...")
+#             if (idx + 1) % 10 == 0:
+#                 print(f"[{idx + 1}/{len(test_loader)}] 이미지 저장 완료...")
 
-    print("모든 테스트 데이터의 전처리 및 저장이 성공적으로 완료되었습니다.")
+#     print("모든 테스트 데이터의 전처리 및 저장이 성공적으로 완료되었습니다.")
 
-# === 실행 ===
-save_all_postprocessed_masks_for_yolo(config_name='unet_plus_enhanced_stenosis', load_name='unet_plus_dice_fine_tune')
+# # === 실행 ===
+# save_all_postprocessed_masks_for_yolo(config_name='unet_plus_enhanced_stenosis', load_name='unet_plus_dice_fine_tune')

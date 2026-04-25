@@ -80,3 +80,8 @@ unet_plus_enhanced_stenosis_postprocessed:
   model : 'unet_plus'
   loss_type : 'dice'
   path : './segmentation_framework/unet_plus_enhanced_stenosis_postprocessed/'
+
+unet_plus_focal_tversky_enhanced:
+  model : 'unet_plus'
+  loss_type : 'focal_tversky'
+  path : './segmentation_framework/unet_plus_focal_tversky_enhanced/'
